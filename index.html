@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat RAG Demo</title>
+
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f4f4f4;
+      }
+
+      /* HEADER */
+      .header {
+        background: linear-gradient(135deg, #000, #222);
+        color: #fff;
+        padding: 25px 20px 30px;
+        text-align: center;
+        border-bottom: 4px solid #ffcc00;
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 26px;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+      }
+
+      .subtitle {
+        margin-top: 10px;
+        font-size: 14px;
+        opacity: 0.85;
+        line-height: 1.4;
+      }
+
+      /* CHAT */
+      .container {
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+      }
+
+      .chat-box {
+        width: 90%;
+        max-width: 600px;
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        height: 70vh;
+      }
+
+      .messages {
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 10px;
+        margin-bottom: 15px;
+      }
+
+      .msg {
+        padding: 10px 15px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        max-width: 80%;
+        white-space: pre-wrap;
+      }
+
+      .user {
+        background: #000;
+        color: #fff;
+        align-self: flex-end;
+      }
+
+      .bot {
+        background: #f1f1f1;
+        color: #333;
+        align-self: flex-start;
+      }
+
+      .input-area {
+        display: flex;
+        gap: 10px;
+      }
+
+      input {
+        flex: 1;
+        padding: 12px;
+        font-size: 16px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+      }
+
+      button {
+        padding: 12px 18px;
+        font-size: 16px;
+        background: #ffcc00;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+
+      button:hover {
+        background: #e0b200;
+      }
+
+      /* FOOTER */
+      .footer {
+        margin-top: 40px;
+        padding: 20px;
+        background: #000;
+        color: #fff;
+        text-align: center;
+        border-top: 4px solid #ffcc00;
+      }
+
+      .footer-logo {
+        width: 70px;
+        margin-bottom: 10px;
+        opacity: 0.9;
+      }
+
+      .footer-text {
+        font-size: 14px;
+        line-height: 1.5;
+        opacity: 0.9;
+      }
+
+      /* SELO FLUTUANTE */
+      .floating-badge {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #000;
+        color: #fff;
+        padding: 16px 20px;
+        border-radius: 14px;
+        border: 3px solid #ffcc00;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-size: 15px;
+        opacity: 0.97;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+        text-decoration: none;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        z-index: 999;
+      }
+
+      .floating-badge img {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        object-fit: cover;
+      }
+
+      .floating-badge small {
+        font-size: 12px;
+        opacity: 0.85;
+      }
+
+      .floating-badge:hover {
+        transform: scale(1.08);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- HEADER -->
+    <header class="header">
+      <h1>🔍 Chat RAG – Demonstração</h1>
+      <p class="subtitle">
+        Este chat responde exclusivamente com informações presentes no livro<br />
+        <strong>Processamento de Linguagem Natural</strong>, organizado por
+        Caseli e Nunes.
+      </p>
+    </header>
+
+    <!-- CHAT -->
+    <div class="container">
+      <div class="chat-box">
+        <div class="messages" id="messages"></div>
+
+        <div class="input-area">
+          <input id="input" type="text" placeholder="Digite sua pergunta..." />
+          <button onclick="sendMessage()">Enviar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <img src="logoAxio.png" alt="Logo Axio" class="footer-logo" />
+      <div class="footer-text">
+        Desenvolvido por <strong>Vanthuir Maia</strong><br />
+        Axio – Automação Inteligente para Negócios<br />
+        📞 +55 87 98153 1743
+      </div>
+    </footer>
+
+    <!-- SELO FLUTUANTE COM LINK -->
+    <a
+      href="https://www.instagram.com/axio.vm/"
+      target="_blank"
+      class="floating-badge"
+    >
+      <img src="logoAxio.png" alt="Logo Axio" />
+      <span>
+        Axio<br />
+        <small>by Vanthuir Maia</small><br />
+        <small>📞 +55 87 98153 1743</small>
+      </span>
+    </a>
+
+    <script>
+      const WEBHOOK_URL =
+        "https://webhook.axiodev.cloud/webhook/AxioAtendimento";
+
+      function addMessage(text, sender) {
+        const msgBox = document.createElement("div");
+        msgBox.classList.add("msg", sender);
+        msgBox.innerText = text;
+        document.getElementById("messages").appendChild(msgBox);
+        document.getElementById("messages").scrollTop =
+          document.getElementById("messages").scrollHeight;
+      }
+
+      async function sendMessage() {
+        const input = document.getElementById("input");
+        const text = input.value.trim();
+        if (!text) return;
+
+        addMessage(text, "user");
+        input.value = "";
+
+        try {
+          const response = await fetch(WEBHOOK_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pergunta: text }),
+          });
+
+          const result = await response.json();
+          addMessage(result.resposta || "⚠️ Erro: resposta vazia", "bot");
+        } catch (e) {
+          addMessage("❌ Erro ao conectar ao servidor", "bot");
+          console.error(e);
+        }
+      }
+
+      // ENTER para enviar
+      document
+        .getElementById("input")
+        .addEventListener("keydown", function (e) {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            sendMessage();
+          }
+        });
+    </script>
+  </body>
+</html>
